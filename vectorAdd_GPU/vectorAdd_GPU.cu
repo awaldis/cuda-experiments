@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <math.h>
+#include <chrono>
 
 // function to add the elements of two arrays
 __global__ void add(int n, float* x, float* y)
@@ -26,27 +27,28 @@ int main(void)
         x[i] = 1.0f;
         y[i] = 2.0f;
     }
-    std::cout << "Before Add" << std::endl;
 
     // Run kernel on 1M elements on the CPU
     int blockSize = 256;
     int numBlocks = (N + blockSize - 1) / blockSize;
+
+    std::cout << "Block Size: " << blockSize << "\n";
+    std::cout << "Number of blocks: " << numBlocks << "\n";
+
+    auto start = std::chrono::high_resolution_clock::now();
     add<<<numBlocks, blockSize>>>(N, x, y);
     
-    std::cout << "After Add" << std::endl;
-
     // Wait for GPU to finish before accessing on host
     cudaDeviceSynchronize();
-
-    std::cout << "After Device Sync" << std::endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Vector addition took: " << elapsed.count() << " milliseconds\n";
 
     // Check for errors (all values should be 3.0f)
     float maxError = 0.0f;
     for (int i = 0; i < N; i++)
         maxError = fmax(maxError, fabs(y[i] - 3.0f));
     std::cout << "Max error: " << maxError << std::endl;
-
-    std::cout << "After Error Check" << std::endl;
 
     // Free memory
     cudaFree(x);

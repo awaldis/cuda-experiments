@@ -7,12 +7,17 @@
 // function to add the elements of two arrays
 __global__ void add(int numElements, float* x, float* y)
 {
-#ifdef MAX_EFFICIENCY == 1 
+#if MAX_EFFICIENCY == 1
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 
     if (i < numElements) {
         y[i] = x[i] + y[i];
+        printf("Valid index: %d, %d, %d, %d\n", threadIdx.x, blockIdx.x, blockDim.x, i);
     }
+    else {
+        printf("Invalid index ignored: %d\n", i);
+    }
+
 #else
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
@@ -23,7 +28,7 @@ __global__ void add(int numElements, float* x, float* y)
 
 int main(void)
 {
-    int N = 1 << 20; // 1M elements
+    int N = 1 << 3; // Number of elements in 1-D vector
 
     float *x;
     float *y;
@@ -39,7 +44,7 @@ int main(void)
     }
 
     // Run kernel on 1M elements on the CPU
-    int blockSize = 256;
+    int blockSize = 32;
     int numBlocks = (N + blockSize - 1) / blockSize;
 
     std::cout << "Block Size: " << blockSize << "\n";

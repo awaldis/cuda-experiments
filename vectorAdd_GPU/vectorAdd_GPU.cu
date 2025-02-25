@@ -2,13 +2,23 @@
 #include <math.h>
 #include <chrono>
 
+#define MAX_EFFICIENCY 1
+
 // function to add the elements of two arrays
-__global__ void add(int n, float* x, float* y)
+__global__ void add(int numElements, float* x, float* y)
 {
+#ifdef MAX_EFFICIENCY == 1 
+    int i = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (i < numElements) {
+        y[i] = x[i] + y[i];
+    }
+#else
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
-    for (int i = index; i < n; i += stride)
+    for (int i = index; i < numElements; i += stride)
         y[i] = x[i] + y[i];
+#endif
 }
 
 int main(void)

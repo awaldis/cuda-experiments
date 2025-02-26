@@ -7,8 +7,9 @@
 // function to add the elements of two arrays
 __global__ void add(int numElements, float* x, float* y)
 {
+    // Print and record start time for this thread.
     unsigned int start_clock = clock();
-    printf("Started thread: %d, blockid: %d, at time %d\n", threadIdx.x, blockIdx.x, start_clock);
+    printf("Started thread: %d, blockid: %d, at time: %d\n", threadIdx.x, blockIdx.x, start_clock);
 
 #if MAX_EFFICIENCY == 1
     int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -27,6 +28,11 @@ __global__ void add(int numElements, float* x, float* y)
     for (int i = index; i < numElements; i += stride)
         y[i] = x[i] + y[i];
 #endif
+    // Print and record end time and execution time for this thread.
+    unsigned int end_clock = clock();
+    unsigned int clock_diff = end_clock - start_clock;
+    printf("End thread: %d, blockid: %d, at time: %d, total time: %d\n",
+                             threadIdx.x, blockIdx.x, end_clock, clock_diff);
 }
 
 int main(void)

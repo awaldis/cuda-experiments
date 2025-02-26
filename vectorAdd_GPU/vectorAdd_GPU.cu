@@ -7,6 +7,9 @@
 // function to add the elements of two arrays
 __global__ void add(int numElements, float* x, float* y)
 {
+    unsigned int start_clock = clock();
+    printf("Started thread: %d, blockid: %d, at time %d\n", threadIdx.x, blockIdx.x, start_clock);
+
 #if MAX_EFFICIENCY == 1
     int i = blockDim.x * blockIdx.x + threadIdx.x;
 

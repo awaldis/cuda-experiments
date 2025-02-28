@@ -1,4 +1,5 @@
 ﻿#include <iostream>
+#include <chrono>
 #include <math.h>
 
 // function to add the elements of two arrays
@@ -21,8 +22,16 @@ int main(void)
         y[i] = 2.0f;
     }
 
+    // Measure time on the host
+    auto start = std::chrono::high_resolution_clock::now();
+
     // Run kernel on 1M elements on the CPU
     add(N, x, y);
+
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << "Kernel execution took: "
+        << elapsed.count() << " ms\n";
 
     // Check for errors (all values should be 3.0f)
     float maxError = 0.0f;

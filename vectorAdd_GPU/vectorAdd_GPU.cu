@@ -43,40 +43,41 @@ __global__ void add(int numElements, float* x, float* y)
 
 int main(int argc, char* argv[])
 {
-    // Number of elements in 1-D vector
-    int N = 1 << 3;  // 8 elements for a simple example
-
-    // Default values for blockSize and numBlocks
+    // Use these default values if the user doesn't specify them.
     int blockSize = 32;
     int numBlocks = -1; // We'll compute if not given
+    int numElements = 1 << 20;
 
-    // ------------------------------------------------
+    // -------------------------------------------------------
     // Parse command-line arguments (optional)
-    // Usage: ./program <blockSize> <numBlocks>
-    // ------------------------------------------------
+    // Usage: ./program <blockSize> <numBlocks> <numElements>
+    // -------------------------------------------------------
     if (argc > 1) {
         blockSize = std::atoi(argv[1]);
     }
     if (argc > 2) {
         numBlocks = std::atoi(argv[2]);
     }
+    if (argc > 3) {
+        numElements = std::atoi(argv[3]);
+    }
 
     // If numBlocks wasn't provided or was <= 0, compute it automatically
     if (numBlocks <= 0) {
-        numBlocks = (N + blockSize - 1) / blockSize;
+        numBlocks = (numElements + blockSize - 1) / blockSize;
     }
 
-    std::cout << "N          : " << N << "\n";
-    std::cout << "blockSize  : " << blockSize << "\n";
-    std::cout << "numBlocks  : " << numBlocks << "\n";
+    std::cout << "numElements : " << numElements << "\n";
+    std::cout << "blockSize   : " << blockSize << "\n";
+    std::cout << "numBlocks   : " << numBlocks << "\n";
 
     // Allocate Unified Memory – accessible from CPU or GPU
     float* x, * y;
-    cudaMallocManaged(&x, N * sizeof(float));
-    cudaMallocManaged(&y, N * sizeof(float));
+    cudaMallocManaged(&x, numElements * sizeof(float));
+    cudaMallocManaged(&y, numElements * sizeof(float));
 
     // initialize x and y arrays on the host
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < numElements; i++) {
         x[i] = 1.0f;
         y[i] = 2.0f;
     }
@@ -85,7 +86,7 @@ int main(int argc, char* argv[])
     auto start = std::chrono::high_resolution_clock::now();
 
     // Launch kernel
-    add<<<numBlocks, blockSize>>>(N, x, y);
+    add<<<numBlocks, blockSize>>>(numElements, x, y);
 
     // Wait for GPU to finish before accessing on host
     cudaDeviceSynchronize();
@@ -97,7 +98,7 @@ int main(int argc, char* argv[])
 
     // Check for errors (all values should be 3.0f after y[i] += x[i])
     float maxError = 0.0f;
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < numElements; i++) {
         maxError = fmax(maxError, fabs(y[i] - 3.0f));
     }
     std::cout << "Max error: " << maxError << std::endl;

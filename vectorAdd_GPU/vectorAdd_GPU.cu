@@ -8,20 +8,27 @@
 // Otherwise, threads stride through array.
 #define MAX_EFFICIENCY 1
 
+// If set to 1, use printf to print debug info to the console.
+#define PRINT_DEBUG_INFO 0
+
 // Kernel function to add the elements of two arrays
 __global__ void add(int numElements, float* x, float* y)
 {
+#if PRINT_DEBUG_INFO == 1
     // Print and record start time for this thread.
     unsigned int start_clock = clock();
     printf("Started thread: %d, blockid: %d, at time: %u\n",
         threadIdx.x, blockIdx.x, start_clock);
+#endif
 
 #if MAX_EFFICIENCY == 1
     int i = blockDim.x * blockIdx.x + threadIdx.x;
     if (i < numElements) {
         y[i] = x[i] + y[i];
+#if PRINT_DEBUG_INFO == 1
         printf("Valid index: %d, %d, %d, %d\n",
             threadIdx.x, blockIdx.x, blockDim.x, i);
+#endif
     }
     else {
         printf("Invalid index ignored: %d\n", i);
@@ -34,11 +41,13 @@ __global__ void add(int numElements, float* x, float* y)
     }
 #endif
 
+#if PRINT_DEBUG_INFO == 1
     // Print and record end time and execution time for this thread.
     unsigned int end_clock = clock();
     unsigned int clock_diff = end_clock - start_clock;
     printf("End thread: %d, blockid: %d, at time: %u, total time: %u\n",
         threadIdx.x, blockIdx.x, end_clock, clock_diff);
+#endif
 }
 
 int main(int argc, char* argv[])

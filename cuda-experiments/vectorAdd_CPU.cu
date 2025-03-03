@@ -9,15 +9,26 @@ void add(int n, float* x, float* y)
         y[i] = x[i] + y[i];
 }
 
-int main(void)
+int main(int argc, char* argv[])
 {
-    int N = 1 << 20; // 1M elements
+    // Use these default values if the user doesn't specify them.
+    int numElements = 1 << 20;
 
-    float* x = new float[N];
-    float* y = new float[N];
+    // -------------------------------------------------------
+    // Parse command-line arguments (optional)
+    // Usage: ./program <numElements>
+    // -------------------------------------------------------
+    if (argc > 1) {
+        numElements = std::atoi(argv[1]);
+    }
+
+    std::cout << "numElements : " << numElements << "\n";
+
+    float* x = new float[numElements];
+    float* y = new float[numElements];
 
     // initialize x and y arrays on the host
-    for (int i = 0; i < N; i++) {
+    for (int i = 0; i < numElements; i++) {
         x[i] = 1.0f;
         y[i] = 2.0f;
     }
@@ -26,16 +37,16 @@ int main(void)
     auto start = std::chrono::high_resolution_clock::now();
 
     // Run kernel on 1M elements on the CPU
-    add(N, x, y);
+    add(numElements, x, y);
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double, std::milli> elapsed = end - start;
-    std::cout << "Kernel execution took: "
+    std::cout << "Vector addition execution took: "
         << elapsed.count() << " ms\n";
 
     // Check for errors (all values should be 3.0f)
     float maxError = 0.0f;
-    for (int i = 0; i < N; i++)
+    for (int i = 0; i < numElements; i++)
         maxError = fmax(maxError, fabs(y[i] - 3.0f));
     std::cout << "Max error: " << maxError << std::endl;
 

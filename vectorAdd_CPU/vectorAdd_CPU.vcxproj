@@ -13,6 +13,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{70E69715-A423-4FEA-AEB5-65DAC16947CF}</ProjectGuid>
     <RootNamespace>cuda_experiments</RootNamespace>
+    <ProjectName>vectorAdd_CPU</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">

@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Archived/Obsolete directories
+vectorAdd_CPU_CUDA_Mistake/
+vectorAdd_CPU_Save/

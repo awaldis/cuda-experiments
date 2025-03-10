@@ -4,24 +4,27 @@
 #include <random>  
 
 // function to perform intense computation on two arrays
-void kernel(int n, float* x, float* y, float* output)
+void Kernel(int n, float* x, float* y, float* output)
 {
 #pragma omp parallel for
 //#pragma loop(no_vector)
     for (int i = 0; i < n; i++) {
         // Perform multiple floating-point operations on each element:
-        float s = sinf(x[i]);                          // Sine of x[i]
-        float c = cosf(y[i]);                          // Cosine of y[i]
-        float m = s * c;                               // Multiply them
-        float sq = sqrtf(fabsf(x[i] * y[i]) + 1.0f);   // Add 1.0f to avoid sqrt(0)
+        float sine        = sinf(x[i]);
+        float cosine      = cosf(y[i]);
+        float mult_result = sine * cosine;
+
+        // Add 1.0f to avoid sqrt(0)
+        float square_root = sqrtf(fabsf(x[i] * y[i]) + 1.0F);
 
         // Combine everything with some arbitrary multiplications/additions:
-        output[i] = (m + sq) * 1.2345f + y[i] * 0.9876f;
+        output[i] = (mult_result + square_root) * 1.2345F + y[i] * 0.9876F;
     }
 }
 
 int main(int argc, char* argv[])  
-{  
+{
+   // TODO: fix this
    // Use these default values if the user doesn't specify them.  
    int numElements = 1 << 20;  
 
@@ -53,7 +56,7 @@ int main(int argc, char* argv[])
    auto start = std::chrono::high_resolution_clock::now();  
 
    // Run kernel code on the arrays in the CPU  
-   kernel(numElements, x, y, output);  
+   Kernel(numElements, x, y, output);  
 
    // Stop time measurement and print the elapsed time.
    auto end = std::chrono::high_resolution_clock::now();
@@ -64,15 +67,17 @@ int main(int argc, char* argv[])
    // Verify that the kernel function actually computes the correct results by
    // performing the same operations here and comparing the results with the
    // kernel output
-   float maxError = 0.0f;
+   float maxError = 0.0F;
    for (int i = 0; i < numElements; i++) {
-       float s = sinf(x[i]);                         // Sine of x[i]
-       float c = cosf(y[i]);                         // Cosine of y[i]
-       float m = s * c;                              // Multiply them
-       float sq = sqrtf(fabsf(x[i] * y[i]) + 1.0f);  // Add 1.0f to avoid sqrt(0)
+       float sine        = sinf(x[i]);
+       float cosine      = cosf(y[i]);
+       float mult_result = sine * cosine;
+
+       // Add 1.0f to avoid sqrt(0)
+       float square_root = sqrtf(fabsf(x[i] * y[i]) + 1.0F);
 
        // Combine everything with some arbitrary multiplications/additions:
-       float expected = (m + sq) * 1.2345f + y[i] * 0.9876f;
+       float expected = (mult_result + square_root) * 1.2345F + y[i] * 0.9876F;
 
        maxError = fmax(maxError, fabs(expected - output[i]));  
    }

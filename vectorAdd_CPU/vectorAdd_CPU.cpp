@@ -4,21 +4,34 @@
 #include <iostream>
 #include <random>
 
-// function to perform intense computation on two arrays
-void Kernel(int n, float* x, float* y, float* output) {
+const float kRandomDistributionMin = 1.0F;
+const float kRandomDistributionMax = 2.0F;
+
+// The actual values of these constants are not important.  As long
+// as they are not something trivial like zero or one.
+const float kMagicNumber1 = 1.2345F;
+const float kMagicNumber2 = 0.9876F;
+
+//---------------------------------------------------------------------------
+// The purpose of this function is to perform intense computation on two
+// arrays so that the caller can measure how long it takes to execute.
+//---------------------------------------------------------------------------
+void Kernel(int n, float* input_array_1, float* input_array_2, float* output) {
 #pragma omp parallel for
   // #pragma loop(no_vector)
   for (int i = 0; i < n; i++) {
     // Perform multiple floating-point operations on each element:
-    float sine = sinf(x[i]);
-    float cosine = cosf(y[i]);
+    float sine = sinf(input_array_1[i]);
+    float cosine = cosf(input_array_2[i]);
     float mult_result = sine * cosine;
 
     // Add 1.0f to avoid sqrt(0)
-    float square_root = sqrtf(fabsf(x[i] * y[i]) + 1.0F);
+    float square_root =
+        sqrtf(fabsf(input_array_1[i] * input_array_2[i]) + 1.0F);
 
     // Combine everything with some arbitrary multiplications/additions:
-    output[i] = (mult_result + square_root) * 1.2345F + y[i] * 0.9876F;
+    output[i] = ((mult_result + square_root) * kMagicNumber1) +
+                (input_array_2[i] * kMagicNumber2);
   }
 }
 //---------------------------------------------------------------------------
@@ -37,25 +50,26 @@ int main(int argc, char* argv[]) {
 
   std::cout << "numElements : " << numElements << "\n";
 
-  float* x = new float[numElements];
-  float* y = new float[numElements];
+  float* input_array_1 = new float[numElements];
+  float* input_array_2 = new float[numElements];
   float* output = new float[numElements];
 
   // Generate random input data for the kernel to process.
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<float> dis(1.0, 2.0);
+  std::random_device rand;
+  std::mt19937 gen(rand());
+  std::uniform_real_distribution<float> dis(kRandomDistributionMin,
+                                            kRandomDistributionMax);
 
   for (int i = 0; i < numElements; i++) {
-    x[i] = dis(gen);
-    y[i] = dis(gen);
+    input_array_1[i] = dis(gen);
+    input_array_2[i] = dis(gen);
   }
 
   // Start time measurement.
   auto start = std::chrono::high_resolution_clock::now();
 
   // Run kernel code on the arrays in the CPU
-  Kernel(numElements, x, y, output);
+  Kernel(numElements, input_array_1, input_array_2, output);
 
   // Stop time measurement and print the elapsed time.
   auto end = std::chrono::high_resolution_clock::now();
@@ -67,23 +81,25 @@ int main(int argc, char* argv[]) {
   // kernel output
   float maxError = 0.0F;
   for (int i = 0; i < numElements; i++) {
-    float sine = sinf(x[i]);
-    float cosine = cosf(y[i]);
+    float sine = sinf(input_array_1[i]);
+    float cosine = cosf(input_array_2[i]);
     float mult_result = sine * cosine;
 
     // Add 1.0f to avoid sqrt(0)
-    float square_root = sqrtf(fabsf(x[i] * y[i]) + 1.0F);
+    float square_root =
+        sqrtf(fabsf(input_array_1[i] * input_array_2[i]) + 1.0F);
 
     // Combine everything with some arbitrary multiplications/additions:
-    float expected = (mult_result + square_root) * 1.2345F + y[i] * 0.9876F;
+    float expected = ((mult_result + square_root) * kMagicNumber1) +
+                     (input_array_2[i] * kMagicNumber2);
 
     maxError = fmax(maxError, fabs(expected - output[i]));
   }
   std::cout << "Max error: " << maxError << std::endl;
 
   // Free memory
-  delete[] x;
-  delete[] y;
+  delete[] input_array_1;
+  delete[] input_array_2;
   delete[] output;
 
   return 0;

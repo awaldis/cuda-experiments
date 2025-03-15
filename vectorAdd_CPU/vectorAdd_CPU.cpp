@@ -16,9 +16,8 @@ const float kMagicNumber2 = 0.9876F;
 // The purpose of this function is to perform intense computation on two
 // arrays so that the caller can measure how long it takes to execute.
 //---------------------------------------------------------------------------
-void Kernel(int n, float* input_array_1, float* input_array_2, float* output) {
-#pragma omp parallel for
-  // #pragma loop(no_vector)
+void KernelWithNoOpenMP(int n, float* input_array_1, float* input_array_2,
+                        float* output) {
   for (int i = 0; i < n; i++) {
     // Perform multiple floating-point operations on each element:
     float sine = sinf(input_array_1[i]);
@@ -34,6 +33,30 @@ void Kernel(int n, float* input_array_1, float* input_array_2, float* output) {
                 (input_array_2[i] * kMagicNumber2);
   }
 }
+
+//---------------------------------------------------------------------------
+// The purpose of this function is to perform intense computation on two
+// arrays so that the caller can measure how long it takes to execute.
+//---------------------------------------------------------------------------
+void KernelWithOpenMP(int n, float* input_array_1, float* input_array_2,
+                      float* output) {
+#pragma omp parallel for
+  for (int i = 0; i < n; i++) {
+    // Perform multiple floating-point operations on each element:
+    float sine = sinf(input_array_1[i]);
+    float cosine = cosf(input_array_2[i]);
+    float mult_result = sine * cosine;
+
+    // Add 1.0f to avoid sqrt(0)
+    float square_root =
+        sqrtf(fabsf(input_array_1[i] * input_array_2[i]) + 1.0F);
+
+    // Combine everything with some arbitrary multiplications/additions:
+    output[i] = ((mult_result + square_root) * kMagicNumber1) +
+                (input_array_2[i] * kMagicNumber2);
+  }
+}
+
 //---------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
   // Use this default value if the user doesn't specify it.
@@ -65,11 +88,15 @@ int main(int argc, char* argv[]) {
     input_array_2[i] = dis(gen);
   }
 
+  //---------------------------------------------------------------------------
+  std::cout << "Starting kernel execution with no OpenMP parallelization..."
+            << std::endl;
+
   // Start time measurement.
   auto start = std::chrono::high_resolution_clock::now();
 
-  // Run kernel code on the arrays in the CPU
-  Kernel(numElements, input_array_1, input_array_2, output);
+  // Run kernel code on the arrays in the CPU with no parallelization.
+  KernelWithNoOpenMP(numElements, input_array_1, input_array_2, output);
 
   // Stop time measurement and print the elapsed time.
   auto end = std::chrono::high_resolution_clock::now();
@@ -80,6 +107,42 @@ int main(int argc, char* argv[]) {
   // performing the same operations here and comparing the results with the
   // kernel output
   float maxError = 0.0F;
+  for (int i = 0; i < numElements; i++) {
+    float sine = sinf(input_array_1[i]);
+    float cosine = cosf(input_array_2[i]);
+    float mult_result = sine * cosine;
+
+    // Add 1.0f to avoid sqrt(0)
+    float square_root =
+        sqrtf(fabsf(input_array_1[i] * input_array_2[i]) + 1.0F);
+
+    // Combine everything with some arbitrary multiplications/additions:
+    float expected = ((mult_result + square_root) * kMagicNumber1) +
+                     (input_array_2[i] * kMagicNumber2);
+
+    maxError = fmax(maxError, fabs(expected - output[i]));
+  }
+  std::cout << "Max error: " << maxError << std::endl;
+
+  //---------------------------------------------------------------------------
+  std::cout << "Starting kernel execution with OpenMP parallelization..."
+            << std::endl;
+
+  // Start time measurement.
+  start = std::chrono::high_resolution_clock::now();
+
+  // Run kernel code on the arrays in the CPU with OpenMP parallelization.
+  KernelWithOpenMP(numElements, input_array_1, input_array_2, output);
+
+  // Stop time measurement and print the elapsed time.
+  end = std::chrono::high_resolution_clock::now();
+  elapsed = end - start;
+  std::cout << "Kernel execution took: " << elapsed.count() << " ms\n";
+
+  // Verify that the kernel function actually computes the correct results by
+  // performing the same operations here and comparing the results with the
+  // kernel output
+  maxError = 0.0F;
   for (int i = 0; i < numElements; i++) {
     float sine = sinf(input_array_1[i]);
     float cosine = cosf(input_array_2[i]);

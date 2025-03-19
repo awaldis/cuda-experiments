@@ -1,11 +1,9 @@
 ﻿#include <math.h>
 
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <random>
-
-const float kRandomDistributionMin = 1.0F;
-const float kRandomDistributionMax = 2.0F;
 
 // The actual values of these constants are not important.  As long
 // as they are not something trivial like zero or one.
@@ -78,6 +76,13 @@ int main(int argc, char* argv[]) {
   float* output = new float[numElements];
 
   // Generate random input data for the kernel to process.
+  // Note that setting the distribution right at the maximum value of float
+  // causes infinite numbers to be generated. So this code scales them back
+  // from the max.
+  const float kRandomDistributionMin =
+      -std::numeric_limits<float>::max() * 0.1F;
+  const float kRandomDistributionMax = std::numeric_limits<float>::max() * 0.1F;
+
   std::random_device rand;
   std::mt19937 gen(rand());
   std::uniform_real_distribution<float> dis(kRandomDistributionMin,
@@ -86,6 +91,13 @@ int main(int argc, char* argv[]) {
   for (int i = 0; i < numElements; i++) {
     input_array_1[i] = dis(gen);
     input_array_2[i] = dis(gen);
+  }
+
+  // Print first 5 numbers as a check
+  std::cout << "First five numbers in first input array:" << std::endl;
+
+  for (int i = 0; i < std::min(numElements, 5); ++i) {
+    std::cout << input_array_1[i] << std::endl;
   }
 
   //---------------------------------------------------------------------------
